@@ -2,19 +2,6 @@ import csv
 import pandas as pd
 import numpy as np
 #
-def find_target(reg_ids, interactions, ext_cut_off):
-  """
-  Function:
-  Inputs:
-    reg_ids:
-    interactions:
-    ext_cut_off: a threshold value (number of base pairs)
-  Output:
-    a list of ids
-  """
-  targets = []
-  return targets
-#
 def find_interactions(regs, loops, max_ext_len = 1e6):
   """
   Function: find possible interactions between regulatory elements (enhancers, promoters) by 
@@ -42,13 +29,14 @@ def find_interactions(regs, loops, max_ext_len = 1e6):
     chr_regs = chr_regs.sort_values("start")
     chr_regs.reset_index(drop=True, inplace=True)
     chr_reg_num = len(chr_regs.index)
-    min_loop_in = np.full((chr_reg_num, chr_reg_num), 1e7)
+    min_loop_in = np.full((chr_reg_num, chr_reg_num), max_ext_len)
     max_loop_out = np.zeros((chr_reg_num, chr_reg_num))
     # elements in a loop can interact
     for loop_index,loop in chr_loops.iterrows():
       for i, reg_i in chr_regs.iterrows():
         for j, reg_j in chr_regs.iterrows():
           if (i < j):
+            # two elements can interact if they are in a loop
             min_loop_in[i][j] = min(min_loop_in[i][j], 
                                     find_loop_in_extension(loop["start"], loop["end"], 
                                                            reg_i["start"], reg_j["start"]))
@@ -57,12 +45,14 @@ def find_interactions(regs, loops, max_ext_len = 1e6):
       for i,reg_i in chr_regs.iterrows():
         for j,reg_j in chr_regs.iterrows():
           if (i < j):
+            # two elements can not interact if they are separated by ANY loop
             max_loop_out[i][j] = max(max_loop_out[i][j],
                                      find_loop_out_extension(loop["start"], loop["end"], 
                                                              reg_i["start"], reg_j["start"]))
     # combine
     for i in range(chr_reg_num):
       for j in range(i + 1, chr_reg_num):
+        # take the max here as we need (i,j) are in a loop AND not separated by any loop
         shortest_ext_len = max(min_loop_in[i][j], max_loop_out[i][j])
         if (shortest_ext_len <= max_ext_len):
           interaction_list.append([chr_regs.iloc[i]["origin_index"], chr_regs.iloc[j]["origin_index"], 
@@ -70,36 +60,14 @@ def find_interactions(regs, loops, max_ext_len = 1e6):
   #
   return pd.DataFrame.from_records(interaction_list, columns=["row_1", "row_2", "shortest_ext_len"])
 #
-
-
-def find_loop_in_extension(a1, a2, e1, e2):
-  if (e1 >= a2):
-    return e2 - a2
-  elif (e1 >= a1):
-    if (e2 >= a2):
-      return e2 - a2
-    else:
-      return 0
-  else:
-    if (e2 <= a1):
-      return a1 - e1
-    elif (e2 <= a2):
-      return a1 - e1
-    else:
-      return max(a1 - e1, e2 - a2)
-def find_loop_out_extension(a1, a2, e1, e2):
-  if (e1 >= a1 and e1 <= a2 and e2 > a2):
-    return e2 - a2
-  elif (e1 < a1 and e2 >= a1 and e2 <= a2):
-    return a1 - e1
-  else:
-    return 0
-
- 
 def find_loop_in_extension(LS, LE, e1, e2):
   """
-  LS, LE: loop start and loop end
-  e1, e2: start position of two elements, e1 <= e2
+  Inputs:
+    LS, LE: loop start and loop end
+    e1, e2: start position of two elements, e1 <= e2
+  Output:
+    a value such that if the extension length >= this value
+    then e1, e2 can interact by the loop (LS,LE) 
   """
   if (e1 >= LE):
     return e2 - LE #---LS---LE---e1---e2----
@@ -118,8 +86,12 @@ def find_loop_in_extension(LS, LE, e1, e2):
 #
 def find_loop_out_extension(LS, LE, e1, e2):
   """
-  LS, LE: loop start and loop end
-  e1, e2: start position of two elements, e1 <= e2
+  Inputs:
+    LS, LE: loop start and loop end
+    e1, e2: start position of two elements, e1 <= e2
+  Output:
+    a value such that if the extension length >= this value
+    then e1, e2 are not separated by the loop (LS,LE) 
   """
   if (e1 >= LS and e1 <= LE and e2 > LE):
     return e2 - LE #---LS---e1----LE----e2----
@@ -127,6 +99,19 @@ def find_loop_out_extension(LS, LE, e1, e2):
     return LS - e1 #---e1----LS----e2----LE---
   else:
     return 0
+#
+def find_target(reg_ids, interactions, ext_cut_off):
+  """
+  Function:
+  Inputs:
+    reg_ids:
+    interactions:
+    ext_cut_off: a threshold value (number of base pairs)
+  Output:
+    a list of ids
+  """
+  targets = []
+  return targets
 
 ## Tests
 def test(test_num):
