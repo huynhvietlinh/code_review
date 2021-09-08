@@ -13,7 +13,7 @@ def str_split_and_sort(ids):
   return ",".join([str(x) for x in sorted([int(id) for id in ids.split(',')])])
 
 def partition_loop(in_bed_filename, debug=False):
-  tmp_flank_bed_filename = "results/tmp_flank.bed"
+  tmp_flank_bed_filename = "tmp_flank.bed"
   # add partition id
   loop_df = pd.read_csv(in_bed_filename, sep='\t', names=["chrom", "start", "end"])
   loop_df["partition_id"] = loop_df.index
