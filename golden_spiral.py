@@ -3,7 +3,7 @@ def draw_golden_spiral (n):
   angles = [0, 270, 180, 90]
   # this describes the direction 
   vectors = [(-1,0), (0,1), (1,0), (0,-1)]
-  
+  #
   f = [0 for i in range(n+1)]
   f[0] = 1
   f[1] = 1
