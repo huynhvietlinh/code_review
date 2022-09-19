@@ -14,9 +14,7 @@ def draw_golden_spiral (n):
       width = 2*f[i],
       height = 2*f[i],
       angle = angles[i%len(angles)],
-      theta1 = 0,
-      theta2 = 90,
-      lw = 2    
+      theta1 = 0, theta2 = 90, lw = 2    
     ))
     arc_center = (arc_center[0] + 
                  vectors[i%len(vectors)][0]*f[i-1], 
