@@ -11,8 +11,7 @@ def draw_golden_spiral (n):
   for i in range(1,n):
     plt.gca().add_patch(Arc(
       xy = arc_center,
-      width = 2*f[i],
-      height = 2*f[i],
+      width = 2*f[i], height = 2*f[i],
       angle = angles[i%len(angles)],
       theta1 = 0, theta2 = 90, lw = 2    
     ))
